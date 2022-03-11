@@ -48,7 +48,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
 
         if (failures.Count > 0) throw new ValidationFailureException();
 
-        return BuildRequest(properties);
+        return BuildRequest(properties, failures);
     }
 
     private static async Task ValidateRequest(TRequest req, HttpContext ctx, EndpointDefinition ep, object? preProcessors, List<ValidationFailure> validationFailures, CancellationToken cancellation)
@@ -94,12 +94,12 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         return streamReader.ReadToEndAsync();
     }
 
-    private static TRequest BuildRequest(Dictionary<string, object?> values)
+    private static TRequest BuildRequest(Dictionary<string, object?> values, List<ValidationFailure> failures)
     {
         // Prefer using the constructors with the most parameters
         var constructors = tRequest.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
             .OrderByDescending(constructor => constructor.GetParameters().Length);
-        var unbindableParameters = new List<List<ParameterInfo>>();
+        var unbindableParameters = new List<List<string>>();
         foreach (var constructor in constructors)
         {
             if (TryBuildRequest(values, constructor, out var request, out var unbindable))
@@ -112,15 +112,16 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             }
         }
 
-        throw new CannotBindAllParametersForConstructorsException(
-            tRequest,
-            unbindableParameters.Select(x => x.Select(param => param.Name!).ToList()).ToList());
+        failures.AddRange(MissingPropertiesToValidationFailures(unbindableParameters));
+        throw new ValidationFailureException();
     }
 
-    private static bool TryBuildRequest(Dictionary<string, object?> values, ConstructorInfo constructorInfo, out TRequest request, out List<ParameterInfo> unbindableParameters)
+    private static bool TryBuildRequest(Dictionary<string, object?> values, ConstructorInfo constructorInfo, out TRequest request, out List<string> unbindableParameters)
     {
         var parameters = constructorInfo.GetParameters();
-        unbindableParameters = parameters.Where(parameter => !values.ContainsKey(parameter.Name!))
+        unbindableParameters = parameters
+            .Where(parameter => !values.ContainsKey(parameter.Name!))
+            .Select(parameter => parameter.Name!)
             .ToList();
         if (unbindableParameters.Any())
         {
@@ -132,6 +133,18 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         request = (TRequest) constructorInfo.Invoke(args);
         BindProperties(request, unused);
         return true;
+    }
+
+    private static IEnumerable<ValidationFailure> MissingPropertiesToValidationFailures(List<List<string>> unbindableProperties)
+    {
+        // TODO Could possibly allow a combination of properties that is a subset of the missing parameters across constructors
+        // Naive way:
+        return unbindableProperties
+            .Where(x => !x.Contains("original"))
+            .OrderBy(x => x.Count)
+            .First()
+            .Select(missingProperty => new ValidationFailure(missingProperty, "Is required"))
+            .ToList();
     }
 
     private static (object?[] args, Dictionary<string, object?> unused) GetArgs(Dictionary<string, object?> values, ParameterInfo[] parameters)
