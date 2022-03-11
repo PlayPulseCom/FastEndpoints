@@ -53,6 +53,7 @@ internal static class ReqTypeCache<TRequest>
                 PropType = propInfo.PropertyType,
                 ValueParser = propInfo.PropertyType.ValueParser(),
                 PropSetter = compiledSetter,
+                PropName = propInfo.Name,
             });
 
             return forbidIfMissing; //if claim is optional, return false so it will also be added as a PropCacheEntry
@@ -129,7 +130,7 @@ internal class SecondaryPropCacheEntry
 {
     public string Identifier { get; init; }
     public bool ForbidIfMissing { get; init; }
-    public string? PropName { get; set; }
+    public string PropName { get; set; }
     public Type PropType { get; init; }
     public Func<object?, (bool isSuccess, object value)>? ValueParser { get; init; }
     public Action<object, object> PropSetter { get; set; }

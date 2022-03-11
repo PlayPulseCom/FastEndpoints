@@ -1,39 +1,54 @@
-﻿using FastEndpoints.Validation;
+﻿using System.Reflection;
+using FastEndpoints.Validation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace FastEndpoints;
 
-public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull, new() where TResponse : notnull, new()
+public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull where TResponse : notnull
 {
     private static async Task<TRequest> BindToModel(HttpContext ctx, List<ValidationFailure> failures, JsonSerializerContext? serializerCtx, CancellationToken cancellation)
     {
-        TRequest? req = default;
-
+        string? plainTextBody = null;
+        IEnumerable<(string, object?)>? jsonBodyValues = null;
         if (ctx.Request.ContentLength > 0)
         {
             if (isPlainTextRequest)
-                req = await BindPlainTextBody(ctx.Request.Body).ConfigureAwait(false);
+            {
+                plainTextBody =  await GetPlainTextBody(ctx.Request.Body).ConfigureAwait(false);
+            }
             else if (ctx.Request.HasJsonContentType())
-                req = (TRequest?)await FastEndpoints.Config.ReqDeserializerFunc(ctx.Request, tRequest, serializerCtx, cancellation);
+            {
+                jsonBodyValues = await GetJsonBodyValuesAsync(ctx.Request, serializerCtx).ConfigureAwait(false);
+            }
         }
 
-        if (req is null)
-            req = new();
+        var properties = new[]
+            {
+                jsonBodyValues ?? ArraySegment<(string, object?)>.Empty,
+                GetFormValues(ctx.Request, failures),
+                GetRouteValues(ctx.Request.RouteValues, failures),
+                GetQueryParamValues(ctx.Request.Query, failures),
+                GetUserClaimValues(ctx.User.Claims, failures),
+                GetHeaderValues(ctx.Request.Headers, failures),
+                GetHasPermissionPropertyValues(ctx.User.Claims, failures),
+            }
+            .SelectMany(x => x)
+            .ToDictionary(x => x.Item1, x => x.Item2, StringComparer.OrdinalIgnoreCase);
 
-        BindFormValues(req, ctx.Request, failures);
-        BindRouteValues(req, ctx.Request.RouteValues, failures);
-        BindQueryParams(req, ctx.Request.Query, failures);
-        BindUserClaims(req, ctx.User.Claims, failures);
-        BindHeaders(req, ctx.Request.Headers, failures);
-        BindHasPermissionProps(req, ctx.User.Claims, failures);
+        if (plainTextBody != null)
+        {
+            properties[nameof(IPlainTextRequest.Content)] = plainTextBody;
+        }
 
         if (failures.Count > 0) throw new ValidationFailureException();
 
-        return req;
+        return BuildRequest(properties);
     }
 
     private static async Task ValidateRequest(TRequest req, HttpContext ctx, EndpointDefinition ep, object? preProcessors, List<ValidationFailure> validationFailures, CancellationToken cancellation)
@@ -73,12 +88,98 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         }
     }
 
-    private static async Task<TRequest> BindPlainTextBody(Stream body)
+    private static Task<string> GetPlainTextBody(Stream body)
     {
-        IPlainTextRequest req = (IPlainTextRequest)new TRequest();
         using var streamReader = new StreamReader(body);
-        req.Content = await streamReader.ReadToEndAsync().ConfigureAwait(false);
-        return (TRequest)req;
+        return streamReader.ReadToEndAsync();
+    }
+
+    private static TRequest BuildRequest(Dictionary<string, object?> values)
+    {
+        // Prefer using the constructors with the most parameters
+        var constructors = tRequest.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .OrderByDescending(constructor => constructor.GetParameters().Length);
+        var unbindableParameters = new List<List<ParameterInfo>>();
+        foreach (var constructor in constructors)
+        {
+            if (TryBuildRequest(values, constructor, out var request, out var unbindable))
+            {
+                return request;
+            }
+            else
+            {
+                unbindableParameters.Add(unbindable);
+            }
+        }
+
+        throw new CannotBindAllParametersForConstructorsException(
+            tRequest,
+            unbindableParameters.Select(x => x.Select(param => param.Name!).ToList()).ToList());
+    }
+
+    private static bool TryBuildRequest(Dictionary<string, object?> values, ConstructorInfo constructorInfo, out TRequest request, out List<ParameterInfo> unbindableParameters)
+    {
+        var parameters = constructorInfo.GetParameters();
+        unbindableParameters = parameters.Where(parameter => !values.ContainsKey(parameter.Name!))
+            .ToList();
+        if (unbindableParameters.Any())
+        {
+            request = default!;
+            return false;
+        }
+
+        var (args, unused) = GetArgs(values, parameters);
+        request = (TRequest) constructorInfo.Invoke(args);
+        BindProperties(request, unused);
+        return true;
+    }
+
+    private static (object?[] args, Dictionary<string, object?> unused) GetArgs(Dictionary<string, object?> values, ParameterInfo[] parameters)
+    {
+        var args = new List<object?>();
+        var unused = new Dictionary<string, object?>(values);
+        foreach (var parameter in parameters)
+        {
+            args.Add(values[parameter.Name!]);
+            unused.Remove(parameter.Name!);
+        }
+
+        return (args.ToArray(), unused);
+    }
+
+    private static void BindProperties(TRequest request, Dictionary<string, object?> values)
+    {
+        foreach (var (name, value) in values)
+        {
+            var property = tRequest.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
+            if (!property!.CanWrite)
+            {
+                // TODO Warn? Error? Or just skip?
+                continue;
+            }
+            
+            property.SetValue(request, value);
+        }
+    }
+
+    private static async Task<IEnumerable<(string, object?)>> GetJsonBodyValuesAsync(HttpRequest request, JsonSerializerContext? ctx)
+    {
+        // TODO Could possibly catch json exception and return failures here
+        using var streamReader = new StreamReader(request.Body);
+        var topNode = JsonNode.Parse(await streamReader.ReadToEndAsync().ConfigureAwait(false));
+        if (topNode == null)
+        {
+            return ArraySegment<(string, object?)>.Empty;
+        }
+        
+        var cachedProps = ReqTypeCache<TRequest>.CachedProps;
+        return topNode
+            .AsObject()
+            .Select(x => (
+                x.Key,
+                cachedProps.TryGetValue(x.Key, out var prop) ? x.Value?.Deserialize(prop.PropType, ctx?.Options ?? FastEndpoints.Config.SerializerOpts) : null
+            ))
+            .ToList();
     }
 
     private static Task AutoSendResponse(HttpContext ctx, TResponse? responseDto, JsonSerializerContext? jsonSerializerContext, CancellationToken cancellation)
@@ -88,50 +189,73 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
                : ctx.Response.SendAsync(responseDto, 200, jsonSerializerContext, cancellation);
     }
 
-    private static void BindFormValues(TRequest req, HttpRequest httpRequest, List<ValidationFailure> failures)
+    private static IEnumerable<(string, object?)> GetFormValues(HttpRequest httpRequest, List<ValidationFailure> failures)
     {
-        if (!httpRequest.HasFormContentType) return;
+        if (!httpRequest.HasFormContentType)
+        {
+            return ArraySegment<(string, object?)>.Empty;
+        }
 
         var formFields = httpRequest.Form.Select(kv => new KeyValuePair<string, object?>(kv.Key, kv.Value[0])).ToArray();
 
-        for (int x = 0; x < formFields.Length; x++)
-            Bind(req, formFields[x], failures);
+        var values = formFields
+            .Select(formField => GetPropertyValue(formField, failures))
+            .Where(value => value != null)
+            .Select(value => value!.Value)
+            .ToList();
 
-        for (int y = 0; y < httpRequest.Form.Files.Count; y++)
+        foreach (var formFile in httpRequest.Form.Files)
         {
-            var formFile = httpRequest.Form.Files[y];
-
             if (ReqTypeCache<TRequest>.CachedProps.TryGetValue(formFile.Name, out var prop))
             {
                 if (prop.PropType == Types.IFormFile)
-                    prop.PropSetter(req, formFile);
+                {
+                    values.Add((formFile.Name, formFile));
+                }
                 else
+                {
                     failures.Add(new(formFile.Name, "Files can only be bound to properties of type IFormFile!"));
+                }
             }
         }
+
+        return values;
     }
 
-    private static void BindRouteValues(TRequest req, RouteValueDictionary routeValues, List<ValidationFailure> failures)
+    private static IEnumerable<(string, object?)> GetRouteValues(RouteValueDictionary routeValues, List<ValidationFailure> failures)
     {
-        if (routeValues.Count == 0) return;
+        if (routeValues.Count == 0)
+        {
+            return ArraySegment<(string, object?)>.Empty;
+        }
 
+        var values = new List<(string, object?)>();
         foreach (var kvp in routeValues)
         {
             if ((kvp.Value as string)?.StartsWith("{") is false)
-                Bind(req, kvp, failures);
+            {
+                var value = GetPropertyValue(kvp, failures);
+                if (value != null)
+                {
+                    values.Add(value.Value);
+                }
+            }
         }
+
+        return values;
     }
 
-    private static void BindQueryParams(TRequest req, IQueryCollection query, List<ValidationFailure> failures)
+    private static IEnumerable<(string, object?)> GetQueryParamValues(IQueryCollection query, List<ValidationFailure> failures)
     {
-        if (query.Count == 0) return;
-
-        foreach (var kvp in query)
-            Bind(req, new(kvp.Key, kvp.Value[0]), failures);
+        return query
+            .Select(kvp => GetPropertyValue(new(kvp.Key, kvp.Value[0]), failures))
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value);
     }
 
-    private static void BindUserClaims(TRequest req, IEnumerable<Claim> claims, List<ValidationFailure> failures)
+    private static IEnumerable<(string, object?)> GetUserClaimValues(IEnumerable<Claim> claims, List<ValidationFailure> failures)
     {
+        var values = new List<(string, object?)>();
         var cachedProps = ReqTypeCache<TRequest>.CachedFromClaimProps;
 
         for (int i = 0; i < cachedProps.Count; i++)
@@ -154,16 +278,23 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             if (claimVal is not null && prop.ValueParser is not null)
             {
                 var (success, value) = prop.ValueParser(claimVal);
-                prop.PropSetter(req, value);
-
-                if (!success)
+                if (success)
+                {
+                    values.Add((prop.PropName, value));
+                }
+                else
+                {
                     failures.Add(new(prop.Identifier, $"Unable to bind claim value [{claimVal}] to a [{prop.PropType.Name}] property!"));
+                }
             }
         }
+
+        return values;
     }
 
-    private static void BindHeaders(TRequest req, IHeaderDictionary headers, List<ValidationFailure> failures)
+    private static IEnumerable<(string, object?)> GetHeaderValues(IHeaderDictionary headers, List<ValidationFailure> failures)
     {
+        var values = new List<(string, object?)>();
         var cachedProps = ReqTypeCache<TRequest>.CachedFromHeaderProps;
 
         for (int i = 0; i < cachedProps.Count; i++)
@@ -177,16 +308,23 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             if (hdrVal is not null && prop.ValueParser is not null)
             {
                 var (success, value) = prop.ValueParser(hdrVal);
-                prop.PropSetter(req, value);
-
-                if (!success)
+                if (success)
+                {
+                    values.Add((prop.Identifier, value));
+                }
+                else
+                {
                     failures.Add(new(prop.Identifier, $"Unable to bind header value [{hdrVal}] to a [{prop.PropType.Name}] property!"));
+                }
             }
         }
+
+        return values;
     }
 
-    private static void BindHasPermissionProps(TRequest req, IEnumerable<Claim> claims, List<ValidationFailure> failures)
+    private static List<(string, object?)> GetHasPermissionPropertyValues(IEnumerable<Claim> claims, List<ValidationFailure> failures)
     {
+        var values = new List<(string, object?)>();
         var cachedProps = ReqTypeCache<TRequest>.CachedHasPermissionProps;
 
         for (int i = 0; i < cachedProps.Count; i++)
@@ -203,23 +341,35 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             if (hasPerm && prop.ValueParser is not null)
             {
                 var (success, value) = prop.ValueParser(hasPerm);
-                prop.PropSetter(req, value);
-
-                if (!success)
+                if (success)
+                {
+                    values.Add((prop.Identifier, value));
+                }
+                else
+                {
                     failures.Add(new(prop.PropName, $"Attribute [HasPermission] does not work with [{prop.PropType.Name}] properties!"));
+                }
             }
         }
+
+        return values;
     }
 
-    private static void Bind(TRequest req, KeyValuePair<string, object?> kvp, List<ValidationFailure> failures)
+    private static (string, object?)? GetPropertyValue(KeyValuePair<string, object?> kvp, List<ValidationFailure> failures)
     {
         if (ReqTypeCache<TRequest>.CachedProps.TryGetValue(kvp.Key, out var prop) && prop.ValueParser is not null)
         {
             var (success, value) = prop.ValueParser(kvp.Value);
-            prop.PropSetter(req, value);
-
+            
             if (!success)
+            {
                 failures.Add(new(kvp.Key, $"Unable to bind [{kvp.Value}] to a [{prop.PropType.Name}] property!"));
+                return null;
+            }
+
+            return (kvp.Key, value);
         }
+
+        return null;
     }
 }

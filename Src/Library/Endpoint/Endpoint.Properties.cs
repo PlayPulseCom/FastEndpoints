@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace FastEndpoints;
 
-public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull, new() where TResponse : notnull, new()
+public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull where TResponse : notnull
 {
     private Http? _httpMethod;
     private string _baseURL;
@@ -29,7 +29,11 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// <summary>
     /// the response that is sent to the client.
     /// </summary>
-    public TResponse Response { get => _response ??= new(); set => _response = value; }
+    public TResponse Response
+    {
+        get => _response ?? throw new InvalidOperationException("Response has not been set");
+        set => _response = value;
+    }
 
     /// <summary>
     /// gives access to the configuration
