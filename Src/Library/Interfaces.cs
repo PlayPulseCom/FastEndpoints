@@ -28,7 +28,7 @@ public interface IPreProcessor<TRequest>
 /// <typeparam name="TResponse">the type of the response dto</typeparam>
 public interface IPostProcessor<TRequest, TResponse>
 {
-    Task PostProcessAsync(TRequest req, TResponse res, HttpContext ctx, IReadOnlyCollection<ValidationFailure> failures, CancellationToken ct);
+    Task PostProcessAsync(TRequest req, TResponse? res, HttpContext ctx, IReadOnlyCollection<ValidationFailure> failures, CancellationToken ct);
 }
 
 /// <summary>

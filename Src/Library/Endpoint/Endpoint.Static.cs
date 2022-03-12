@@ -28,18 +28,15 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             }
         }
 
-        var properties = new[]
-            {
-                jsonBodyValues ?? ArraySegment<(string, object?)>.Empty,
-                GetFormValues(ctx.Request, failures),
-                GetRouteValues(ctx.Request.RouteValues, failures),
-                GetQueryParamValues(ctx.Request.Query, failures),
-                GetUserClaimValues(ctx.User.Claims, failures),
-                GetHeaderValues(ctx.Request.Headers, failures),
-                GetHasPermissionPropertyValues(ctx.User.Claims, failures),
-            }
-            .SelectMany(x => x)
-            .ToDictionary(x => x.Item1, x => x.Item2, StringComparer.OrdinalIgnoreCase);
+        var properties = CreatePropertiesDictionary(
+            jsonBodyValues ?? ArraySegment<(string, object?)>.Empty,
+            GetFormValues(ctx.Request, failures),
+            GetRouteValues(ctx.Request.RouteValues, failures),
+            GetQueryParamValues(ctx.Request.Query, failures),
+            GetUserClaimValues(ctx.User.Claims, failures),
+            GetHeaderValues(ctx.Request.Headers, failures),
+            GetHasPermissionPropertyValues(ctx.User.Claims, failures)
+        );
 
         if (plainTextBody != null)
         {
@@ -49,6 +46,23 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         if (failures.Count > 0) throw new ValidationFailureException();
 
         return BuildRequest(properties, failures);
+    }
+
+    /// <remarks>
+    /// Later properties will override earlier properties
+    /// </remarks>
+    private static Dictionary<string, object?> CreatePropertiesDictionary(params IEnumerable<(string, object?)>[] properties)
+    {
+        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var propertiesList in properties)
+        {
+            foreach (var (name, value) in propertiesList)
+            {
+                result[name] = value;
+            }
+        }
+
+        return result;
     }
 
     private static async Task ValidateRequest(TRequest req, HttpContext ctx, EndpointDefinition ep, object? preProcessors, List<ValidationFailure> validationFailures, CancellationToken cancellation)
@@ -70,7 +84,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         }
     }
 
-    private static async Task RunPostProcessors(object? postProcessors, TRequest req, TResponse resp, HttpContext ctx, List<ValidationFailure> validationFailures, CancellationToken cancellation)
+    private static async Task RunPostProcessors(object? postProcessors, TRequest req, TResponse? resp, HttpContext ctx, List<ValidationFailure> validationFailures, CancellationToken cancellation)
     {
         if (postProcessors is not null)
         {
@@ -99,6 +113,11 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         // Prefer using the constructors with the most parameters
         var constructors = tRequest.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
             .OrderByDescending(constructor => constructor.GetParameters().Length);
+        if (!constructors.Any())
+        {
+            return CreateRequestWithoutConstructor(values);
+        }
+        
         var unbindableParameters = new List<List<string>>();
         foreach (var constructor in constructors)
         {
@@ -133,6 +152,13 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         request = (TRequest) constructorInfo.Invoke(args);
         BindProperties(request, unused);
         return true;
+    }
+
+    private static TRequest CreateRequestWithoutConstructor(Dictionary<string, object?> values)
+    {
+        var request = (TRequest) Activator.CreateInstance(tRequest)!;
+        BindProperties(request, values);
+        return request;
     }
 
     private static IEnumerable<ValidationFailure> MissingPropertiesToValidationFailures(List<List<string>> unbindableProperties)
@@ -323,7 +349,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
                 var (success, value) = prop.ValueParser(hdrVal);
                 if (success)
                 {
-                    values.Add((prop.Identifier, value));
+                    values.Add((prop.PropName, value));
                 }
                 else
                 {
@@ -356,7 +382,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
                 var (success, value) = prop.ValueParser(hasPerm);
                 if (success)
                 {
-                    values.Add((prop.Identifier, value));
+                    values.Add((prop.PropName, value));
                 }
                 else
                 {
@@ -376,11 +402,11 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             
             if (!success)
             {
-                failures.Add(new(kvp.Key, $"Unable to bind [{kvp.Value}] to a [{prop.PropType.Name}] property!"));
+                failures.Add(new(prop.PropName, $"Unable to bind [{kvp.Value}] to a [{prop.PropType.Name}] property!"));
                 return null;
             }
 
-            return (kvp.Key, value);
+            return (prop.PropName, value);
         }
 
         return null;

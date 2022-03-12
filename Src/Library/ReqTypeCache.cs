@@ -52,7 +52,6 @@ internal static class ReqTypeCache<TRequest>
                 ForbidIfMissing = forbidIfMissing,
                 PropType = propInfo.PropertyType,
                 ValueParser = propInfo.PropertyType.ValueParser(),
-                PropSetter = compiledSetter,
                 PropName = propInfo.Name,
             });
 
@@ -75,7 +74,7 @@ internal static class ReqTypeCache<TRequest>
                 ForbidIfMissing = forbidIfMissing,
                 PropType = propInfo.PropertyType,
                 ValueParser = propInfo.PropertyType.ValueParser(),
-                PropSetter = compiledSetter
+                PropName = propInfo.Name,
             });
 
             return forbidIfMissing; //if header is optional, return false so it will also be added as a PropCacheEntry;
@@ -98,7 +97,6 @@ internal static class ReqTypeCache<TRequest>
                 PropType = propInfo.PropertyType,
                 PropName = propInfo.Name,
                 ValueParser = propInfo.PropertyType.ValueParser(),
-                PropSetter = compiledSetter
             });
 
             return true; // don't allow binding from any other sources
@@ -112,18 +110,18 @@ internal static class ReqTypeCache<TRequest>
 
         CachedProps.Add(attrib?.Name ?? propInfo.Name, new()
         {
+            PropName = propInfo.Name,
             PropType = propInfo.PropertyType,
             ValueParser = propInfo.PropertyType.ValueParser(),
-            PropSetter = compiledSetter
         });
     }
 }
 
 internal class PrimaryPropCacheEntry
 {
+    public string PropName { get; set; }
     public Type PropType { get; init; }
     public Func<object?, (bool isSuccess, object value)>? ValueParser { get; init; }
-    public Action<object, object> PropSetter { get; init; }
 }
 
 internal class SecondaryPropCacheEntry
@@ -133,5 +131,4 @@ internal class SecondaryPropCacheEntry
     public string PropName { get; set; }
     public Type PropType { get; init; }
     public Func<object?, (bool isSuccess, object value)>? ValueParser { get; init; }
-    public Action<object, object> PropSetter { get; set; }
 }

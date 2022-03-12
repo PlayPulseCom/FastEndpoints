@@ -14,7 +14,6 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     private ILogger _logger;
     private IWebHostEnvironment _env;
     private IConfiguration _config;
-    private TResponse? _response;
 
     /// <summary>
     /// indicates if there are any validation failures for the current request
@@ -29,11 +28,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// <summary>
     /// the response that is sent to the client.
     /// </summary>
-    public TResponse Response
-    {
-        get => _response ?? throw new InvalidOperationException("Response has not been set");
-        set => _response = value;
-    }
+    public TResponse? Response { get; set; }
 
     /// <summary>
     /// gives access to the configuration

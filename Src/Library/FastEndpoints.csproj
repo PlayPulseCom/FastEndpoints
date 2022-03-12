@@ -40,7 +40,7 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <PackageVersion>9.0.1</PackageVersion>
+        <PackageVersion>9.0.3</PackageVersion>
     </PropertyGroup>
 
     <ItemGroup>

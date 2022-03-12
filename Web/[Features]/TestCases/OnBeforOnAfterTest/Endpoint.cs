@@ -20,8 +20,10 @@
 
         public override Task HandleAsync(Request r, CancellationToken c)
         {
-            Response.Host = r.Host;
-            return SendAsync(Response);
+            return SendAsync(new Response
+            {
+                Host = r.Host
+            });
         }
     }
 }

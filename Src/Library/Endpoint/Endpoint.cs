@@ -41,12 +41,12 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, ISer
             await OnBeforeHandleAsync(req).ConfigureAwait(false);
 
             if (endpoint.ExecuteAsyncImplemented)
-                _response = await ExecuteAsync(req, cancellation).ConfigureAwait(false);
+                Response = await ExecuteAsync(req, cancellation).ConfigureAwait(false);
             else
                 await HandleAsync(req, cancellation).ConfigureAwait(false);
-
+            
             if (!ctx.Items.ContainsKey(Constants.ResponseSent))
-                await AutoSendResponse(ctx, _response, endpoint.SerializerContext, cancellation).ConfigureAwait(false);
+                await AutoSendResponse(ctx, Response, endpoint.SerializerContext, cancellation).ConfigureAwait(false);
 
             OnAfterHandle(req, Response); await OnAfterHandleAsync(req, Response).ConfigureAwait(false);
 
