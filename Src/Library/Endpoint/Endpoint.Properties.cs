@@ -7,14 +7,13 @@ using System.Security.Claims;
 
 namespace FastEndpoints;
 
-public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull, new() where TResponse : notnull, new()
+public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull where TResponse : notnull
 {
     private Http? _httpMethod;
     private string _baseURL;
     private ILogger _logger;
     private IWebHostEnvironment _env;
     private IConfiguration _config;
-    private TResponse? _response;
 
     /// <summary>
     /// indicates if there are any validation failures for the current request
@@ -29,7 +28,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// <summary>
     /// the response that is sent to the client.
     /// </summary>
-    public TResponse Response { get => _response ??= new(); set => _response = value; }
+    public TResponse? Response { get; set; }
 
     /// <summary>
     /// gives access to the configuration

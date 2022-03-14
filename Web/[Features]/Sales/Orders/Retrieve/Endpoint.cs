@@ -14,6 +14,6 @@ public class Endpoint : Endpoint<Request, Response>
 
     public override Task HandleAsync(Request r, CancellationToken c)
     {
-        return SendAsync(Response);
+        return SendAsync(new Response());
     }
 }

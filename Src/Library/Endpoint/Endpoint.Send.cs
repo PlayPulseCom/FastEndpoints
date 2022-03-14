@@ -2,7 +2,7 @@
 
 namespace FastEndpoints;
 
-public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull, new() where TResponse : notnull, new()
+public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull where TResponse : notnull
 {
     /// <summary>
     /// send the supplied response dto serialized as json to the client.
@@ -12,6 +12,11 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// <param name="cancellation">optional cancellation token</param>
     protected Task SendAsync(TResponse response, int statusCode = 200, CancellationToken cancellation = default)
     {
+        if (response is null)
+        {
+            throw new ArgumentNullException(nameof(response));
+        }
+        
         Response = response;
         return HttpContext.Response.SendAsync(response, statusCode, Configuration.SerializerContext, cancellation);
     }

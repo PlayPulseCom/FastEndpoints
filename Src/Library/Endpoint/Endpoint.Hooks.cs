@@ -1,6 +1,6 @@
 ﻿namespace FastEndpoints;
 
-public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull, new() where TResponse : notnull, new()
+public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where TRequest : notnull where TResponse : notnull
 {
     /// <summary>
     /// override this method if you'd like to do something to the request dto before it gets validated.
@@ -43,12 +43,12 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// </summary>
     /// <param name="req">the request dto</param>
     /// <param name="res">the response dto that was sent to the client</param>
-    public virtual void OnAfterHandle(TRequest req, TResponse res) { }
+    public virtual void OnAfterHandle(TRequest? req, TResponse? res) { }
 
     /// <summary>
     /// override this method if you'd like to do something after the handler is executed.
     /// </summary>
     /// <param name="req">the request dto</param>
     /// <param name="res">the response dto that was sent to the client</param>
-    public virtual Task OnAfterHandleAsync(TRequest req, TResponse res) => Task.CompletedTask;
+    public virtual Task OnAfterHandleAsync(TRequest? req, TResponse? res) => Task.CompletedTask;
 }

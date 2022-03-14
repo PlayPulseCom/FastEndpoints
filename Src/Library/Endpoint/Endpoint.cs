@@ -9,7 +9,7 @@ namespace FastEndpoints;
 /// </summary>
 /// <typeparam name="TRequest">the type of the request dto</typeparam>
 /// <typeparam name="TResponse">the type of the response dto</typeparam>
-public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, IServiceResolver where TRequest : notnull, new() where TResponse : notnull, new()
+public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, IServiceResolver where TRequest : notnull where TResponse : notnull
 {
     internal override async Task ExecAsync(HttpContext ctx, EndpointDefinition endpoint, CancellationToken cancellation)
     {
@@ -41,12 +41,12 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, ISer
             await OnBeforeHandleAsync(req).ConfigureAwait(false);
 
             if (endpoint.ExecuteAsyncImplemented)
-                _response = await ExecuteAsync(req, cancellation).ConfigureAwait(false);
+                Response = await ExecuteAsync(req, cancellation).ConfigureAwait(false);
             else
                 await HandleAsync(req, cancellation).ConfigureAwait(false);
-
+            
             if (!ctx.Items.ContainsKey(Constants.ResponseSent))
-                await AutoSendResponse(ctx, _response, endpoint.SerializerContext, cancellation).ConfigureAwait(false);
+                await AutoSendResponse(ctx, Response, endpoint.SerializerContext, cancellation).ConfigureAwait(false);
 
             OnAfterHandle(req, Response); await OnAfterHandleAsync(req, Response).ConfigureAwait(false);
 
@@ -210,7 +210,7 @@ public abstract class EndpointWithoutRequest<TResponse> : Endpoint<EmptyRequest,
 /// use this base class for defining endpoints that only use a request dto and don't use a response dto.
 /// </summary>
 /// <typeparam name="TRequest">the type of the request dto</typeparam>
-public abstract class Endpoint<TRequest> : Endpoint<TRequest, object> where TRequest : notnull, new() { };
+public abstract class Endpoint<TRequest> : Endpoint<TRequest, object> where TRequest : notnull { };
 
 /// <summary>
 /// use this base class for defining endpoints that use both request and response dtos as well as require mapping to and from a domain entity using a seperate entity mapper.
