@@ -2,23 +2,29 @@
 
     <PropertyGroup>
 
-        <Version>3.10.0</Version>
+        <Version>4.0.0</Version>
 
         <PackageReleaseNotes>
-            ### NEW
-            - add SendRedirectAsync() method
-            - add SendOkAsync() method from PR #51
-            - overload for JWTBearer.CreateToken() to supply issuer and audience
-            - absolute url generation support for SendCreatedAt() method
+            ### BREAKING CHANGES
+            - PR #70 fluentvalidation code is no longer integrated. remove the package reference to `FastEndpoints.Validation` from your csproj file and add a `global using FluentValidation`. no other changes are necessary.
+            - PR #68 `SerializerContext[T]()` has been removed. use the `SerializerContext(myContext.Default)` and provide the serializer context yourself.
+            - the `Describe()` method has been removed. use `Description()` isntead. refer to the [doc page](https://fast-endpoints.com/wiki/Swagger-Support.html#describe-endpoints) for details. to migrate your existing code, just rename `Describe(...)` to `Description(..., clearDefaults: true)`
+            - removed a previously deprecated `Summary()` overload. use one of the other `Summary()` methods if you were using the deprecated method.
 
-            ### CHANGES (minor breaking)
-            - #59 `SendErrorsAsync()` method now takes an optional status code
-            - #59 `ErrorResponseBuilder()` func is now supplied a http status code
+            ### NEW
+            - `Configure()` method is now optional. endpoint classes can be annotated with `[HttpGet("xyz")]`,`[AllowAnonymous]`,`[Authorize(Roles="abc")]` instead if that's preferred. Advanced usage however does require `Configure()` method.
+            - `SendEventStreamAsync()` method for doing server-sent-events streams
+            - `DontAutoTag()` method for ignoring auto swagger tagging based on path segment
+            - `[QueryParam]` attribute for marking/describing request dto properties which are to be bound from query parameters.
+            - PR #73 `Query[T]("xyz")` endpoint method for reading query params without a request dto
 
             ### FIXES
-            - #58 test url cache issue
-            - response body duplication issue with http servers other than kestrel
-            - content-length header missing issue with cross-fetch client
+            - #65 with serializer ctx not being set correctly
+            - #69 swagger not removing json properties correctly
+
+            ### IMPROVEMENTS
+            - nswag now uses the same serializer settings as fastendpoints by default, which is overrideable.
+            - optional (IsRequired=false) `[FromClaim]` and `[HasPermission]` dto properties now get transformed into query params in swagger.
         </PackageReleaseNotes>
 
         <TargetFramework>net6.0</TargetFramework>
@@ -44,9 +50,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="FluentValidation" Version="10.4.0" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <ProjectReference Include="..\Validation\FastEndpoints.Validation.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,9 +1,11 @@
 global using FastEndpoints;
 global using FastEndpoints.Security;
-global using FastEndpoints.Validation;
 global using Web.Auth;
 using FastEndpoints.Swagger;
+using Microsoft.AspNetCore.Localization;
 using NSwag;
+using System.Globalization;
+using System.Text.Json;
 using Web.Services;
 
 var builder = WebApplication.CreateBuilder();
@@ -20,7 +22,10 @@ builder.Services
         s.DocumentName = "Initial Release";
         s.Title = "Web API";
         s.Version = "v0.0";
-    }, shortSchemaNames: true)
+    },
+    shortSchemaNames: true,
+    serializerSettings: x => x.PropertyNamingPolicy = JsonNamingPolicy.CamelCase)
+
     .AddSwaggerDoc(maxEndpointVersion: 1, settings: s =>
      {
          s.DocumentName = "Release 1.0";
@@ -33,6 +38,7 @@ builder.Services
              Type = OpenApiSecuritySchemeType.ApiKey,
          });
      })
+
     .AddSwaggerDoc(maxEndpointVersion: 2, settings: s =>
     {
         s.DocumentName = "Release 2.0";
@@ -41,6 +47,15 @@ builder.Services
     });
 
 var app = builder.Build();
+
+var supportedCultures = new[] { new CultureInfo("en-US") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
+
 app.UseDefaultExceptionHandler();
 app.UseResponseCaching();
 

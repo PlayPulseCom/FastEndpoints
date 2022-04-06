@@ -1,5 +1,5 @@
 ﻿using FastEndpoints;
-using FastEndpoints.Validation;
+using FluentValidation;
 
 namespace FastEndpointsBench;
 

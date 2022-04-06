@@ -1,3 +1,6 @@
+using FluentValidation;
+using System.Text.Json.Serialization;
+
 namespace TestCases.RouteBindingTest;
 
 public class Custom //: IParseable<Custom>
@@ -29,7 +32,7 @@ public class Request
     public Uri? Url { get; set; }
     public Custom Custom { get; set; }
 
-    [BindFrom("Decimal"), Newtonsoft.Json.JsonProperty("Decimal")]
+    [BindFrom("decimal")]
     public decimal DecimalNumber { get; set; }
 
     [BindFrom("XBlank")]
@@ -40,6 +43,7 @@ public class Request
     /// </summary>
     public string FromBody { get; set; }
 
+    [JsonIgnore]
     public int ReadOnly => 100;
 }
 

@@ -1,5 +1,4 @@
-﻿using FastEndpoints.Validation;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
@@ -77,8 +76,8 @@ public static class MainExtensions
 
             foreach (var route in epDef.Routes)
             {
-                var finalRoute = routeBuilder.BuildRoute(epDef.Version.Current, route);
-                BaseEndpoint.TestURLCache[epDef.EndpointType] = finalRoute;
+                var finalRoute = routeBuilder.BuildRoute(epDef.Version.Current, route, epDef.RoutePrefixOverride);
+                IEndpoint.SetTestURL(epDef.EndpointType, finalRoute);
 
                 routeNum++;
 
@@ -145,7 +144,7 @@ public static class MainExtensions
             //we wait for 10 minutes in case WAF might create multiple instances of the web application in some testing scenarios.
             //if someone's tests run for more than 10 minutes, we should make this a user configurable setting.
 
-            await Task.Delay(TimeSpan.FromMinutes(10)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMinutes(10));
             _endpoints = null!;
         });
 
@@ -155,7 +154,7 @@ public static class MainExtensions
     private static Func<string> SendMisconfiguredPipelineMsg()
         => () => "UseFastEndpoints() must appear after any routing middleware like UseRouting() and before any terminating middleware like UseEndpoints()";
 
-    internal static string BuildRoute(this StringBuilder builder, int epVersion, string route)
+    internal static string BuildRoute(this StringBuilder builder, int epVersion, string route, string? prefixOverride)
     {
         // {rPrfix}/{p}{ver}/{route}
         // mobile/v1/customer/retrieve
@@ -163,10 +162,10 @@ public static class MainExtensions
         // {rPrfix}/{route}/{p}{ver}
         // mobile/customer/retrieve/v1
 
-        if (RoutingOpts?.Prefix is not null)
+        if (RoutingOpts?.Prefix is not null && prefixOverride != string.Empty)
         {
             builder.Append('/')
-                   .Append(RoutingOpts.Prefix)
+                   .Append(prefixOverride ?? RoutingOpts.Prefix)
                    .Append('/');
         }
 
@@ -214,14 +213,15 @@ public static class MainExtensions
     {
         var policiesToAdd = new List<string>();
 
-        if (ep.PreBuiltUserPolicies?.Any() is true) policiesToAdd.AddRange(ep.PreBuiltUserPolicies);
+        if (ep.PreBuiltUserPolicies?.Any() is true)
+            policiesToAdd.AddRange(ep.PreBuiltUserPolicies);
 
         if (ep.Permissions?.Any() is true ||
             ep.ClaimTypes?.Any() is true ||
             ep.Roles?.Any() is true ||
             ep.AuthSchemes?.Any() is true)
         {
-            policiesToAdd.Add(SecurityPolicyName(ep.EndpointType));
+            policiesToAdd.Add(ep.SecurityPolicyName);
         }
 
         return policiesToAdd.Select(p =>
@@ -245,9 +245,7 @@ public static class MainExtensions
             if (ep.Roles is null && ep.Permissions is null && ep.ClaimTypes is null && ep.AuthSchemes is null)
                 continue;
 
-            var secPolName = SecurityPolicyName(ep.EndpointType);
-
-            opts.AddPolicy(secPolName, b =>
+            opts.AddPolicy(ep.SecurityPolicyName, b =>
             {
                 b.RequireAuthenticatedUser();
 
@@ -291,11 +289,6 @@ public static class MainExtensions
                 //      roles and auth schemes are specified in the authorizeattribute in BuildAuthorizeAttributes()
             });
         }
-    }
-
-    private static string SecurityPolicyName(Type endpointType)
-    {
-        return $"epPolicy:{endpointType.FullName}";
     }
 }
 

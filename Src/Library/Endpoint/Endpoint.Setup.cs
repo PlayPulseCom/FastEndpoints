@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using static FastEndpoints.Config;
 
@@ -69,7 +68,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// <summary>
     /// specify one or more http method verbs this endpoint should be accepting requests for
     /// </summary>
-    protected void Verbs(params Http[] methods)
+    public sealed override void Verbs(params Http[] methods)
     {
         Configuration.Verbs = methods.Select(m => m.ToString()).ToArray();
 
@@ -102,6 +101,11 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     /// disable auto validation failure responses (400 bad request with error details) for this endpoint
     /// </summary>
     protected void DontThrowIfValidationFails() => Configuration.ThrowIfValidationFails = false;
+
+    /// <summary>
+    /// if swagger auto tagging based on path segment is enabled, calling this method will prevent a tag from being added to this endpoint.
+    /// </summary>
+    protected void DontAutoTag() => Configuration.DontAutoTag = true;
 
     /// <summary>
     /// allow unauthenticated requests to this endpoint. optionally specify a set of verbs to allow unauthenticated access with.
@@ -225,34 +229,19 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     protected void Options(Action<RouteHandlerBuilder> builder) => Configuration.UserConfigAction = builder;
 
     /// <summary>
-    /// describe openapi metadata for this endpoint. this method clears the default Accepts/Produces metadata.
-    /// <c>b => b.Accepts&lt;Request&gt;("text/plain")</c>
+    /// describe openapi metadata for this endpoint. optionaly specify whether or not you want to clear the default Accepts/Produces metadata.
+    /// <para>
+    /// EXAMPLE: <c>b => b.Accepts&lt;Request&gt;("text/plain")</c>
+    /// </para>
     /// </summary>
     /// <param name="builder">the route handler builder for this endpoint</param>
-    protected void Describe(Action<RouteHandlerBuilder> builder)
+    /// <param name="clearDefaults">set to true if the defaults should be cleared</param>
+    protected void Description(Action<RouteHandlerBuilder> builder, bool clearDefaults = false)
     {
-        Action<RouteHandlerBuilder> clearDefaultsAction = b =>
-        {
-            b.Add(epBuilder =>
-            {
-                foreach (var m in epBuilder.Metadata.Where(o => o.GetType().Name is "ProducesResponseTypeMetadata" or "AcceptsMetadata").ToArray())
-                    epBuilder.Metadata.Remove(m);
-            });
-        };
-
-        Configuration.UserConfigAction = clearDefaultsAction + builder;
-    }
-
-    //todo: remove in v4.0
-    [Obsolete("Use the one of the other Summary() overloads.", false)]
-    protected void Summary(string endpointDescription, params (int statusCode, string statusCodeDescription)[] statusCodeDescriptions)
-    {
-        Summary(s =>
-        {
-            s.Description = endpointDescription;
-            foreach (var (code, desc) in statusCodeDescriptions)
-                s[code] = desc;
-        });
+        if (clearDefaults)
+            Configuration.UserConfigAction = ClearDefaultAcceptProducesMetadata + builder;
+        else
+            Configuration.UserConfigAction = builder;
     }
 
     /// <summary>
@@ -287,6 +276,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
 
     /// <summary>
     /// specify one or more string tags for this endpoint so they can be used in the exclusion filter during registration.
+    /// <para>HINT: these tags have nothing to do with swagger tags!</para>
     /// </summary>
     /// <param name="endpointTags">the tag values to associate with this endpoint</param>
     protected void Tags(params string[] endpointTags)
@@ -328,19 +318,24 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     }
 
     /// <summary>
-    /// specify the json serializer context if code generation for request/response dtos
+    /// specify the json serializer context if code generation for request/response dtos is being used
     /// </summary>
     /// <typeparam name="TContext">the type of the json serializer context for this endpoint</typeparam>
-    protected void SerializerContext<TContext>() where TContext : JsonSerializerContext
+    protected void SerializerContext<TContext>(TContext serializerContext) where TContext : JsonSerializerContext
     {
-        Configuration.SerializerContext =
-            (JsonSerializerContext)Activator.CreateInstance(
-                typeof(TContext),
-                new JsonSerializerOptions(SerializerOpts))!;
+        Configuration.SerializerContext = serializerContext;
     }
 
     /// <summary>
     /// register the validator for this endpoint as scoped instead of singleton. which will enable constructor injection at the cost of performance.
     /// </summary>
     protected void ScopedValidator() => Configuration.ScopedValidator = true;
+
+    /// <summary>
+    /// specify an override route prefix for this endpoint if a global route prefix is enabled.
+    /// this is ignored if a global route prefix is not configured.
+    /// global prefix can be ignored by setting <c>string.Empty</c>
+    /// </summary>
+    /// <param name="routePrefix">route prefix value</param>
+    protected void RoutePrefixOverride(string routePrefix) => Configuration.RoutePrefixOverride = routePrefix;
 }

@@ -17,10 +17,10 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, ISer
         Configuration = endpoint;
         try
         {
-            var req = await BindToModel(ctx, ValidationFailures, endpoint.SerializerContext, cancellation).ConfigureAwait(false);
+            var req = await BindToModel(ctx, ValidationFailures, endpoint.SerializerContext, cancellation);
 
             OnBeforeValidate(req);
-            await OnBeforeValidateAsync(req).ConfigureAwait(false);
+            await OnBeforeValidateAsync(req);
 
             await ValidateRequest(
                 req,
@@ -28,33 +28,33 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, ISer
                 endpoint,
                 endpoint.PreProcessors,
                 ValidationFailures,
-                cancellation).ConfigureAwait(false);
+                cancellation);
 
-            OnAfterValidate(req); await OnAfterValidateAsync(req).ConfigureAwait(false);
+            OnAfterValidate(req); await OnAfterValidateAsync(req);
 
-            await RunPreprocessors(endpoint.PreProcessors, req, ctx, ValidationFailures, cancellation).ConfigureAwait(false);
+            await RunPreprocessors(endpoint.PreProcessors, req, ctx, ValidationFailures, cancellation);
 
-            if (ctx.Items.ContainsKey(Constants.ResponseSent)) //HttpContext.Response.HasStarted doesn't work in AWS lambda!!!
+            if (ResponseStarted) //HttpContext.Response.HasStarted doesn't work in AWS lambda!!!
                 return; //response already sent to client (most likely from a preprocessor)
 
             OnBeforeHandle(req);
-            await OnBeforeHandleAsync(req).ConfigureAwait(false);
+            await OnBeforeHandleAsync(req);
 
             if (endpoint.ExecuteAsyncImplemented)
-                Response = await ExecuteAsync(req, cancellation).ConfigureAwait(false);
+                Response = await ExecuteAsync(req, cancellation);
             else
-                await HandleAsync(req, cancellation).ConfigureAwait(false);
-            
-            if (!ctx.Items.ContainsKey(Constants.ResponseSent))
-                await AutoSendResponse(ctx, Response, endpoint.SerializerContext, cancellation).ConfigureAwait(false);
+                await HandleAsync(req, cancellation);
 
-            OnAfterHandle(req, Response); await OnAfterHandleAsync(req, Response).ConfigureAwait(false);
+            if (!ResponseStarted)
+                await AutoSendResponse(ctx, Response, endpoint.SerializerContext, cancellation);
 
-            await RunPostProcessors(endpoint.PostProcessors, req, Response, ctx, ValidationFailures, cancellation).ConfigureAwait(false);
+            OnAfterHandle(req, Response); await OnAfterHandleAsync(req, Response);
+
+            await RunPostProcessors(endpoint.PostProcessors, req, Response, ctx, ValidationFailures, cancellation);
         }
         catch (ValidationFailureException)
         {
-            await SendErrorsAsync(cancellation: cancellation).ConfigureAwait(false);
+            await SendErrorsAsync(cancellation: cancellation);
         }
     }
 
@@ -133,6 +133,36 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint, ISer
         else if (isRequired)
         {
             ValidationFailures.Add(new(paramName, "Route parameter was not found!"));
+        }
+
+        ThrowIfAnyErrors();
+
+        return default;// not required and retrieval failed
+    }
+
+    /// <summary>
+    /// get the value of a given query parameter by specifying the resulting type and query parameter name.
+    /// NOTE: an automatic validation error is sent to the client when value retrieval is not successful.
+    /// </summary>
+    /// <typeparam name="T">type of the result</typeparam>
+    /// <param name="paramName">query parameter name</param>
+    /// <param name="isRequired">set to false for disabling the automatic validation error</param>
+    /// <returns>the value if retrieval is successful or null if <paramref name="isRequired"/> is set to false</returns>
+    protected T? Query<T>(string paramName, bool isRequired = true)
+    {
+        if (HttpContext.Request.Query.TryGetValue(paramName, out var val))
+        {
+            var res = typeof(T).ValueParser()?.Invoke(val);
+
+            if (res?.isSuccess is true)
+                return (T?)res?.value;
+
+            if (isRequired)
+                ValidationFailures.Add(new(paramName, "Unable to read value of query parameter!"));
+        }
+        else if (isRequired)
+        {
+            ValidationFailures.Add(new(paramName, "Query parameter was not found!"));
         }
 
         ThrowIfAnyErrors();

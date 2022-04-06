@@ -1,5 +1,83 @@
 ﻿namespace FastEndpoints;
 
+[AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+public abstract class HttpAttribute : Attribute
+{
+    internal Http Verb { get; set; }
+    internal string Route { get; set; }
+
+    protected HttpAttribute(Http verb, string route)
+    {
+        Verb = verb;
+        Route = route;
+    }
+}
+
+/// <summary>
+/// use this attribute to specify a GET route for an endpoint
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public class HttpGetAttribute : HttpAttribute
+{
+    /// <summary>
+    /// use this attribute to specify a GET route for an endpoint
+    /// </summary>
+    /// <param name="route">the route for the endpoint</param>
+    public HttpGetAttribute(string route) : base(Http.GET, route) { }
+}
+
+/// <summary>
+/// use this attribute to specify a POST route for an endpoint
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public class HttpPostAttribute : HttpAttribute
+{
+    /// <summary>
+    /// use this attribute to specify a POST route for an endpoint
+    /// </summary>
+    /// <param name="route">the route for the endpoint</param>
+    public HttpPostAttribute(string route) : base(Http.POST, route) { }
+}
+
+/// <summary>
+/// use this attribute to specify a PUT route for an endpoint
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public class HttpPutAttribute : HttpAttribute
+{
+    /// <summary>
+    /// use this attribute to specify a PUT route for an endpoint
+    /// </summary>
+    /// <param name="route">the route for the endpoint</param>
+    public HttpPutAttribute(string route) : base(Http.PUT, route) { }
+}
+
+/// <summary>
+/// use this attribute to specify a PATCH route for an endpoint
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public class HttpPatchAttribute : HttpAttribute
+{
+    /// <summary>
+    /// use this attribute to specify a PATCH route for an endpoint
+    /// </summary>
+    /// <param name="route">the route for the endpoint</param>
+    public HttpPatchAttribute(string route) : base(Http.PATCH, route) { }
+}
+
+/// <summary>
+/// use this attribute to specify a DELETE route for an endpoint
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public class HttpDeleteAttribute : HttpAttribute
+{
+    /// <summary>
+    /// use this attribute to specify a DELETE route for an endpoint
+    /// </summary>
+    /// <param name="route">the route for the endpoint</param>
+    public HttpDeleteAttribute(string route) : base(Http.DELETE, route) { }
+}
+
 /// <summary>
 /// properties decorated with this attribute will have their values auto bound from the relevant claim of the current user principal
 /// </summary>
@@ -121,7 +199,7 @@ public class HasPermissionAttribute : Attribute
 }
 
 /// <summary>
-/// use this attribute to specify the name of the name of route param, query param, or form field if it's different from the name of the property being bound to.
+/// use this attribute to specify the name of route param, query param, or form field if it's different from the name of the property being bound to.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public class BindFromAttribute : Attribute
@@ -140,6 +218,12 @@ public class BindFromAttribute : Attribute
         Name = name;
     }
 }
+
+/// <summary>
+/// properties decorated with this attribute will have a corresponding request parameter added to the swagger schema
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+public class QueryParamAttribute : Attribute { }
 
 /// <summary>
 /// attribute used to mark classes that should be hidden from public api

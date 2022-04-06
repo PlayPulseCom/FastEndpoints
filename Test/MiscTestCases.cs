@@ -365,7 +365,21 @@ namespace Test
             using var stringContent = new StringContent("this is the body content");
             stringContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/plain");
 
-            var rsp = await AdminClient.PostAsync("/api/test-cases/plaintext/12345", stringContent);
+            var rsp = await AdminClient.PostAsync("test-cases/plaintext/12345", stringContent);
+
+            var res = await rsp.Content.ReadFromJsonAsync<TestCases.PlainTextRequestTest.Response>();
+
+            Assert.AreEqual("this is the body content", res.BodyContent);
+            Assert.AreEqual(12345, res.Id);
+        }
+
+        [TestMethod]
+        public async Task GlobalRoutePrefixOverride()
+        {
+            using var stringContent = new StringContent("this is the body content");
+            stringContent.Headers.ContentType = MediaTypeHeaderValue.Parse("text/plain");
+
+            var rsp = await AdminClient.PostAsync("/mobile/api/test-cases/global-prefix-override/12345", stringContent);
 
             var res = await rsp.Content.ReadFromJsonAsync<TestCases.PlainTextRequestTest.Response>();
 
@@ -382,6 +396,31 @@ namespace Test
 
             Assert.AreEqual(HttpStatusCode.OK, rsp.StatusCode);
             Assert.AreEqual("ok!", res.Message);
+        }
+
+        [TestMethod]
+        public async Task QueryParamReadingInEndpointWithoutRequest()
+        {
+            var (rsp, res) = await GuestClient.GETAsync<
+                EmptyRequest,
+                TestCases.RouteBindingInEpWithoutReq.Response>(
+                "/api/test-cases/ep-witout-req-query-param-binding-test?customerId=09809&otherId=12", new());
+
+            Assert.AreEqual(HttpStatusCode.OK, rsp?.StatusCode);
+            Assert.AreEqual(09809, res!.CustomerID);
+            Assert.AreEqual(12, res!.OtherID);
+        }
+
+        [TestMethod]
+        public async Task QueryParamReadingIsRequired()
+        {
+            var (rsp, res) = await GuestClient.GETAsync<
+                EmptyRequest,
+                ErrorResponse>(
+                "/api/test-cases/ep-witout-req-query-param-binding-test?customerId=09809&otherId=lkjhlkjh", new());
+
+            Assert.AreEqual(HttpStatusCode.BadRequest, rsp?.StatusCode);
+            Assert.IsTrue(res?.Errors.ContainsKey("OtherID"));
         }
     }
 }

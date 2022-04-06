@@ -29,7 +29,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.BaseEndpoint.html",
-          "hash": "+nu5cf8uNCRPJYWINUNIzIW/LFI3lM2wBPtOmB/qOFo="
+          "hash": "yAYOEpwfiXkQsh3LcGokMQcgL9mnIdYdXYtVbiX26Jk="
         }
       },
       "is_incremental": false,
@@ -41,7 +41,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.BindFromAttribute.html",
-          "hash": "9WXAz5Z3F/kLW54uUAh8ueUww3LvCZXAb+cy9xgzcAw="
+          "hash": "C7ShVqmiVqixTLsBKi48I6CjMxHSbZMIr4ZS2d/GEvQ="
         }
       },
       "is_incremental": false,
@@ -53,7 +53,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.Config.html",
-          "hash": "RHdpOmic4lzVCHcLes8XutlvKoV5skW81vjicb9fgPs="
+          "hash": "qELhU2urPbiSdWPVpk8TeAoSa+PdhGTlbOhMB6Oud5s="
         }
       },
       "is_incremental": false,
@@ -89,7 +89,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.Endpoint-1.html",
-          "hash": "mNUnbr9wiiv2mh0pFlMJdMuYDuiNPtDbx5Mil9zkGrc="
+          "hash": "4KshRrt22FzChBXGSJRjaGMKboNn6Co1ErNvRDPt4o8="
         }
       },
       "is_incremental": false,
@@ -101,7 +101,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.Endpoint-2.html",
-          "hash": "R2Kpvk498XkC7+vFWre4jGvDcEHbUukUS2poOJtzJjY="
+          "hash": "evP8Z95NKUcRTj6GxAG8Mj/meehVMU7wjTkeu4JTOFs="
         }
       },
       "is_incremental": false,
@@ -113,7 +113,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.Endpoint-3.html",
-          "hash": "3rWuVAGKM0MOGtSjDotURy5K0ruh+Eu4P67JkF0JbY8="
+          "hash": "CgHcl9XKvdylf7OCyB2azKoJV07zlCesiC2NwTZP5lI="
         }
       },
       "is_incremental": false,
@@ -125,7 +125,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.EndpointDefinition.html",
-          "hash": "RijF6P/6t1/ZGQRtjGPOHJnbMzm7Ysu5CwCxKl2oxkA="
+          "hash": "sNy2vzY+qJ9V/k2Rs5Sts9UCXtJFGPPJcgZqMqfco3U="
         }
       },
       "is_incremental": false,
@@ -161,7 +161,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.EndpointWithMapping-3.html",
-          "hash": "NlNzDaxPo0ndwbUDMhtSD6MiaojqhxunM+lliwsVryM="
+          "hash": "PTTASvG6CmZElM/sKcJxOzIy1BUD0AqcaavdyGV6cNs="
         }
       },
       "is_incremental": false,
@@ -173,7 +173,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.EndpointWithoutRequest-1.html",
-          "hash": "r8FdNvO9aVAorRxsGDRusEoiKr879A0+H0kQKNoYtlM="
+          "hash": "C63t9baPEqvRqMZIaQ7d9nXYKQ8cEO8x448/MoJxFt8="
         }
       },
       "is_incremental": false,
@@ -185,7 +185,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.EndpointWithoutRequest.html",
-          "hash": "KXPfwucpjjUxJjryiC6BMjzXHV8JH/C5lRJYWCs0IlY="
+          "hash": "5wuES6IzlV9Z4xVSgWKrkmuknGAlhww5BI2olsk7z+0="
         }
       },
       "is_incremental": false,
@@ -209,7 +209,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.ErrorResponse.html",
-          "hash": "VHgO8Jr60vQA21ToH+5vwDafzuhDP6zNoK8ggzEuqzQ="
+          "hash": "tXVJ950JmLXTOnlFCKGqH2QKAvGhVehppaPOnE1YB5Y="
         }
       },
       "is_incremental": false,
@@ -325,6 +325,18 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.HttpAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.HttpAttribute.html",
+          "hash": "ACsYGaLahFpWmjzLxT+0+dOWx70pk9IgnncluvoZ9A4="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FastEndpoints.HttpClientExtensions.yml",
       "output": {
         ".html": {
@@ -337,11 +349,71 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.HttpDeleteAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.HttpDeleteAttribute.html",
+          "hash": "ZemYQH+ZlG6MZTxE5j/tm+lDfLplTYKuxI8WjiD2KMo="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.HttpGetAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.HttpGetAttribute.html",
+          "hash": "PYW3culi3pQCpY/XKTbL/irJ+s5sHfY+ITkxX14XfuU="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.HttpPatchAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.HttpPatchAttribute.html",
+          "hash": "ebIrHJk/+QY7E1ZdFGdp5Aohpwv7J2R4ETEkBY6uubg="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.HttpPostAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.HttpPostAttribute.html",
+          "hash": "4vaqRcuJ6jb0xgCZNjg/aPLBpJB13grxOgPSpzfFgcE="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.HttpPutAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.HttpPutAttribute.html",
+          "hash": "anCJ10QMYW0C9dWN3z7aX3w7WoEYsAQMw3lMdAJMM98="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FastEndpoints.HttpResponseExtensions.yml",
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.HttpResponseExtensions.html",
-          "hash": "GBj9tlJm+mWeTiCsOJXgxkPQWWt8ZqtTfhCGDLji7DI="
+          "hash": "AO6OeMLtV3W8S1uAm30BAMmcKZETnop2GVGml1Wk91Y="
         }
       },
       "is_incremental": false,
@@ -377,7 +449,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.IPostProcessor-2.html",
-          "hash": "ePK766+XriqlHaqT4g9eHn06HU1z3aIybOfaFOH189Y="
+          "hash": "gaYDWCalW+2TtlW6IzAyoyIwyoDgwWx0DQLQ3XZCzAw="
         }
       },
       "is_incremental": false,
@@ -389,7 +461,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.IPreProcessor-1.html",
-          "hash": "Icu+9rCeii3x+lu/0Jhg7Lg4xlR3xAdyDZ4HvGFHXOI="
+          "hash": "2PsLgm2A9/WkHiSDX1HcGp/3wbklMOla1xAHEMwN3+g="
         }
       },
       "is_incremental": false,
@@ -445,6 +517,18 @@
     },
     {
       "type": "ManagedReference",
+      "source_relative_path": "api/FastEndpoints.QueryParamAttribute.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/FastEndpoints.QueryParamAttribute.html",
+          "hash": "xSDUqOYxekoJ7icoj9rLN/drybZcy3/ILFYAa1FwS1Q="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "ManagedReference",
       "source_relative_path": "api/FastEndpoints.RoutingOptions.yml",
       "output": {
         ".html": {
@@ -461,7 +545,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.Security.AuthExtensions.html",
-          "hash": "wm65yBdQE3ElLBx1QSRLfXYQByWwPEzbK9Q42z3LSAw="
+          "hash": "OAkoWs2lCdsjUUzezyqWXRRS4rgnCUP1uIeZMLwUaoI="
         }
       },
       "is_incremental": false,
@@ -509,7 +593,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.Swagger.Extensions.html",
-          "hash": "fCQIFvQTrYomaGN8f2R6ue1IqPpLDZKW73u5/KQTjLs="
+          "hash": "6OLai56nRi80wGLZ47655Tf24g2MHiT1/yd6JFWTwJs="
         }
       },
       "is_incremental": false,
@@ -541,11 +625,11 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FastEndpoints.Validation.Validator-1.yml",
+      "source_relative_path": "api/FastEndpoints.Validation.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FastEndpoints.Validation.Validator-1.html",
-          "hash": "9ztRLyRIgy8FMllIy31Ckf7OnGCYvdgMWDSPBK/Zt4w="
+          "relative_path": "api/FastEndpoints.Validation.html",
+          "hash": "GcKDaVTLila9vwZV4XhNCNQuQE8IA99m48jPwE+qlfQ="
         }
       },
       "is_incremental": false,
@@ -553,11 +637,11 @@
     },
     {
       "type": "ManagedReference",
-      "source_relative_path": "api/FastEndpoints.Validation.yml",
+      "source_relative_path": "api/FastEndpoints.Validator-1.yml",
       "output": {
         ".html": {
-          "relative_path": "api/FastEndpoints.Validation.html",
-          "hash": "WLCPTcDIqcIWQWbuonbtPx+HjWSAn0s7McJTUgA6CWo="
+          "relative_path": "api/FastEndpoints.Validator-1.html",
+          "hash": "KNgnNeLznBZ1PRVAEVI5GOp3B1XapzTsskFZSEuDexo="
         }
       },
       "is_incremental": false,
@@ -581,7 +665,7 @@
       "output": {
         ".html": {
           "relative_path": "api/FastEndpoints.html",
-          "hash": "XyaIwQsN8Dv23h/hb2B6nFwNyq6XrokUUPNE9rdFK1U="
+          "hash": "GT52wO4auALH5GJ1lsdxHyARZeOl24Nb7hEIJLTuezI="
         }
       },
       "is_incremental": false,
@@ -593,7 +677,7 @@
       "output": {
         ".html": {
           "relative_path": "api/toc.html",
-          "hash": "htWsULx1EkUi/zwBS6Ks6nkxmCQOdzOLEgzWGxkK8+o="
+          "hash": "ZTXY81r7AYIB9GxU6oYgMVnzrHWfr8183h0qO31S5d8="
         }
       },
       "is_incremental": false,
@@ -721,12 +805,34 @@
       "version": ""
     },
     {
+      "type": "Resource",
+      "source_relative_path": "images/swagger-queryparam.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/swagger-queryparam.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Resource",
+      "source_relative_path": "images/techempower-benchmarks.png",
+      "output": {
+        "resource": {
+          "relative_path": "images/techempower-benchmarks.png"
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
       "type": "Conceptual",
       "source_relative_path": "index.md",
       "output": {
         ".html": {
           "relative_path": "index.html",
-          "hash": "O3sx6vxYJAb8W5kjoN4Am150TvYomp5nYVGdCAE0ONc="
+          "hash": "MXdQ3JGlyOi2stW3PVWQhWdFVI/SREuyyYdOKSxYBlU="
         }
       },
       "is_incremental": false,
@@ -762,7 +868,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/Benchmarks.html",
-          "hash": "+4JamcFH4fyS60+7MMONXifOgvnDNQ/ZAA1kpWG4h10="
+          "hash": "TEJ9yqPBwFVQxHXREDOK3L8cz1ozk+PbgqvSVM1TQQs="
         }
       },
       "is_incremental": false,
@@ -774,7 +880,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/Configuration-Settings.html",
-          "hash": "yvouYQ2e64PNCsSmNgd4grQVN2+OqrxV5rKOXPxiLqg="
+          "hash": "OEr3z/nADs5CEFuLVQMWzklBYYb7IVzeQeeEKph8UtY="
         }
       },
       "is_incremental": false,
@@ -846,7 +952,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/Get-Started.html",
-          "hash": "zvqzF0CGKruQkJVJvQpqBUWI92T7gOUNFrtC/DID1CA="
+          "hash": "WkF8nJgSiFohMUSP7FvzR6fzsFZk5TftprhzjzX52os="
         }
       },
       "is_incremental": false,
@@ -870,7 +976,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/Misc-Conveniences.html",
-          "hash": "0rZ0GGaekgNe+We+ICzOrSxMKqvctGYIvLHvbqDMSQ4="
+          "hash": "F/0qkGbxh93fBEtgxaAcZ9duahdHtGASb7BP8f3C5dA="
         }
       },
       "is_incremental": false,
@@ -882,7 +988,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/Model-Binding.html",
-          "hash": "mjXiBz/YusoAT1LLKnD/6FDAmcpjpQGRR8vch55p33g="
+          "hash": "kvg1/jFe+D2V/mklhV1Xn5unfWhM15us9S86ZFgUYY0="
         }
       },
       "is_incremental": false,
@@ -938,11 +1044,23 @@
     },
     {
       "type": "Conceptual",
+      "source_relative_path": "wiki/Server-Sent-Events.md",
+      "output": {
+        ".html": {
+          "relative_path": "wiki/Server-Sent-Events.html",
+          "hash": "mDIR/QcFkHX7tFKQ69K1+B1oE9BC9v2DsnasLATKs5k="
+        }
+      },
+      "is_incremental": false,
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
       "source_relative_path": "wiki/Swagger-Support.md",
       "output": {
         ".html": {
           "relative_path": "wiki/Swagger-Support.html",
-          "hash": "XOiEdRUCtghqgvUi1V8HHTzHVzM5eg4COYSvHUqJ/vs="
+          "hash": "pAlhdlrtPFE3+6K+n4NDIvJwA+5G/8C2mkm3yGvODiM="
         }
       },
       "is_incremental": false,
@@ -966,7 +1084,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/Validation.html",
-          "hash": "n+Jx8x26mx6vdWHig26PP2jGlrDJ3XCJ1vJYV6NlZbU="
+          "hash": "JaYTF2eKx0uaepEqinRWBnILTJ1RTFt0My5pbrfCVBE="
         }
       },
       "is_incremental": false,
@@ -978,7 +1096,7 @@
       "output": {
         ".html": {
           "relative_path": "wiki/toc.html",
-          "hash": "zhJsixfMzytcfNcA2z7tZwQTBtKssULhwnXd66o3ZPk="
+          "hash": "kk5pQ3nTyf14Cyzd6GBakBolagle8o+onSNXOTAEECs="
         }
       },
       "is_incremental": false,
@@ -997,14 +1115,14 @@
         "ConceptualDocumentProcessor": {
           "can_incremental": true,
           "incrementalPhase": "build",
-          "total_file_count": 20,
-          "skipped_file_count": 20
+          "total_file_count": 21,
+          "skipped_file_count": 21
         },
         "ManagedReferenceDocumentProcessor": {
           "can_incremental": true,
           "incrementalPhase": "build",
-          "total_file_count": 47,
-          "skipped_file_count": 47
+          "total_file_count": 54,
+          "skipped_file_count": 25
         },
         "ResourceDocumentProcessor": {
           "can_incremental": false,
