@@ -7,6 +7,7 @@ using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using NJsonSchema.Generation.TypeMappers;
 
 namespace FastEndpoints.Swagger;
 
@@ -176,14 +177,15 @@ internal class OperationProcessor : IOperationProcessor
                 //remove corresponding json field from the request body
                 RemovePropFromRequestBodyContent(m.Value, op.RequestBody?.Content);
 
-                return new OpenApiParameter
-                {
-                    Name = ActualParamName(m.Value),
-                    Kind = OpenApiParameterKind.Path,
-                    IsRequired = true,
-                    Schema = JsonSchema.FromType(typeof(string)), //todo: detect route constraints from {name:int}/{name:double}
-                    Description = reqParamDescriptions.GetValueOrDefault(ActualParamName(m.Value))
-                };
+                return Parameter(
+                    typeof(string), //todo: detect route constraints from {name:int}/{name:double}
+                    ActualParamName(m.Value),
+                    OpenApiParameterKind.Path,
+                    true,
+                    ctx,
+                    reqParamDescriptions.GetValueOrDefault(ActualParamName(m.Value)),
+                    reqDtoType?.GetProperty(m.Value)?.GetCustomAttributes() ?? ArraySegment<Attribute>.Empty
+                );
             })
             .ToList();
 
@@ -197,15 +199,14 @@ internal class OperationProcessor : IOperationProcessor
                        p.CanWrite &&
                        ShouldAddQueryParam(p) &&
                        !reqParams.Any(rp => rp.Name.Equals(p.Name, StringComparison.OrdinalIgnoreCase)))
-                .Select(p =>
-                    new OpenApiParameter
-                    {
-                        Name = p.Name,
-                        IsRequired = !p.IsNullable(),
-                        Schema = JsonSchema.FromType(p.PropertyType),
-                        Kind = OpenApiParameterKind.Query,
-                        Description = reqParamDescriptions.GetValueOrDefault(p.Name)
-                    })
+                .Select(p => Parameter(
+                    p.PropertyType,
+                    p.Name,
+                    OpenApiParameterKind.Query,
+                    !p.IsNullable(),
+                    ctx,
+                    reqParamDescriptions.GetValueOrDefault(p.Name),
+                    p.GetCustomAttributes()))
                 .ToList();
 
             if (qParams?.Count > 0)
@@ -222,14 +223,14 @@ internal class OperationProcessor : IOperationProcessor
                     if (attribute is FromHeaderAttribute hAttrib)
                     {
                         var pName = hAttrib.HeaderName ?? prop.Name;
-                        reqParams.Add(new OpenApiParameter
-                        {
-                            Name = pName,
-                            IsRequired = hAttrib.IsRequired,
-                            Schema = JsonSchema.FromType(prop.PropertyType),
-                            Kind = OpenApiParameterKind.Header,
-                            Description = reqParamDescriptions.GetValueOrDefault(pName)
-                        });
+                        reqParams.Add(Parameter(
+                            prop.PropertyType,
+                            pName,
+                            OpenApiParameterKind.Header,
+                            hAttrib.IsRequired,
+                            ctx,
+                            reqParamDescriptions.GetValueOrDefault(pName),
+                            prop.GetCustomAttributes()));
 
                         //remove corresponding json body field if it's required. allow binding only from header.
                         if (hAttrib.IsRequired)
@@ -271,6 +272,29 @@ internal class OperationProcessor : IOperationProcessor
         }
 
         return true;
+    }
+
+    private static OpenApiParameter Parameter(
+        Type propertyType,
+        string propertyName,
+        OpenApiParameterKind kind,
+        bool isRequired,
+        OperationProcessorContext ctx,
+        string? paramDescription,
+        IEnumerable<Attribute> attributes)
+    {
+        var typeMapper = ctx.Settings.TypeMappers
+            .FirstOrDefault(typeMapper => typeMapper.MappedType == propertyType);
+        var schema = JsonSchema.FromType(propertyType);
+        typeMapper?.GenerateSchema(schema, new TypeMapperContext(propertyType, ctx.SchemaGenerator, ctx.SchemaResolver, attributes));
+        return new OpenApiParameter
+        {
+            Name = propertyName,
+            IsRequired = isRequired,
+            Schema = schema,
+            Kind = kind,
+            Description = paramDescription,
+        };
     }
 
     private static string ActualParamName(string input)
