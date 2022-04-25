@@ -65,7 +65,7 @@ internal static class ReflectionExtensions
         if (type == Types.Uri)
             return input => (true, new Uri((string)input!));
 
-        var tryParseMethod = type.GetMethod("TryParse", BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy, new[] { Types.String, type.MakeByRefType() });
+        var tryParseMethod = type.GetMethod("TryParse", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy, new[] { Types.String, type.MakeByRefType() });
         if (tryParseMethod == null || tryParseMethod.ReturnType != Types.Bool)
             return null;
 
