@@ -194,7 +194,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         foreach (var (name, value) in values)
         {
             var property = tRequest.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.IgnoreCase);
-            if (!property!.CanWrite)
+            if (property == null || !property.CanWrite)
             {
                 // TODO Warn? Error? Or just skip?
                 continue;
