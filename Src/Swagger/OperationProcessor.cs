@@ -54,7 +54,7 @@ internal class OperationProcessor : IOperationProcessor
             op.OperationId = nameMetaData.EndpointName;
 
         //set operation tag
-        if (tagIndex > 0)
+        if (tagIndex > 0 && !endpoint.DontAutoTag)
         {
             var segments = bareRoute.Split('/').Where(s => s != string.Empty).ToArray();
             if (segments.Length >= tagIndex)
@@ -113,8 +113,10 @@ internal class OperationProcessor : IOperationProcessor
               if (defaultDescriptions.ContainsKey(res.Key))
                   res.Value.Description = defaultDescriptions[res.Key]; //first set the default text
 
-              if (endpoint.Summary is not null)
-                  res.Value.Description = endpoint.Summary.Responses.GetValueOrDefault(Convert.ToInt32(res.Key)); //then take values from summary object
+              var key = Convert.ToInt32(res.Key);
+
+              if (endpoint.Summary?.Responses.ContainsKey(key) is true)
+                  res.Value.Description = endpoint.Summary.Responses[key]; //then take values from summary object
           });
 
         var reqDtoType = apiDescription.ParameterDescriptions.FirstOrDefault()?.Type;
@@ -169,7 +171,7 @@ internal class OperationProcessor : IOperationProcessor
 
         var reqParams = new List<OpenApiParameter>();
 
-        //add a param for each route param such as /{xxx}/{yyy}/{zzz}
+        //add a path param for each route param such as /{xxx}/{yyy}/{zzz}
         reqParams = regex
             .Matches(apiDescription?.RelativePath!)
             .Select(m =>
@@ -189,24 +191,27 @@ internal class OperationProcessor : IOperationProcessor
             })
             .ToList();
 
-        if (isGETRequest && reqDtoType is not null)
+        //add query params for properties marked with [QueryParam] or for all props if it's a GET request
+        if (reqDtoType is not null)
         {
-            //it's a GET request with a request dto
-            //so let's add each dto property as a query param to enable swagger ui to execute GET request with user supplied values
-
             var qParams = reqDtoProps?
-                .Where(p =>
-                       p.CanWrite &&
-                       ShouldAddQueryParam(p) &&
-                       !reqParams.Any(rp => rp.Name.Equals(p.Name, StringComparison.OrdinalIgnoreCase)))
-                .Select(p => Parameter(
-                    p.PropertyType,
-                    p.Name,
-                    OpenApiParameterKind.Query,
-                    !p.IsNullable(),
-                    ctx,
-                    reqParamDescriptions.GetValueOrDefault(p.Name),
-                    p.GetCustomAttributes()))
+                .Where(p => ShouldAddQueryParam(p, reqParams, isGETRequest))
+                .Select(p =>
+                {
+                    var pName = p.GetCustomAttribute<BindFromAttribute>()?.Name ?? p.Name;
+
+                    //remove corresponding json field from the request body
+                    RemovePropFromRequestBodyContent(pName, op.RequestBody?.Content);
+
+                    return Parameter(
+                        p.PropertyType,
+                        pName,
+                        OpenApiParameterKind.Query,
+                        !p.IsNullable(),
+                        ctx,
+                        reqParamDescriptions.GetValueOrDefault(p.Name),
+                        p.GetCustomAttributes());
+                })
                 .ToList();
 
             if (qParams?.Count > 0)
@@ -305,10 +310,18 @@ internal class OperationProcessor : IOperationProcessor
         return left.TrimEnd('?');
     }
 
-    private static bool ShouldAddQueryParam(PropertyInfo prop)
+    private static bool ShouldAddQueryParam(PropertyInfo prop, List<OpenApiParameter> reqParams, bool isGETRequest)
     {
+        if (!prop.CanWrite)
+            return false;
+
+        var paramName = prop.Name;
+
         foreach (var attribute in prop.GetCustomAttributes())
         {
+            if (attribute is BindFromAttribute bAtt)
+                paramName = bAtt.Name;
+
             if (attribute is FromHeaderAttribute)
                 return false; // because header request params are being added
 
@@ -318,24 +331,45 @@ internal class OperationProcessor : IOperationProcessor
             if (attribute is HasPermissionAttribute pAttrib)
                 return !pAttrib.IsRequired; // add param if it's not required. if required only can bind from actual permission.
         }
-        return true;
+
+        return
+            //it's a GET request and request params already has it. so don't add
+            (isGETRequest && !reqParams.Any(rp => rp.Name.Equals(paramName, StringComparison.OrdinalIgnoreCase)))
+                ||
+            //this prop is marked with [QueryParam], so add. applies to all verbs.
+            prop.IsDefined(Types.QueryParamAttribute);
     }
 
     private static void RemovePropFromRequestBodyContent(string propName, IDictionary<string, OpenApiMediaType>? content)
     {
         if (content is null) return;
 
+        propName = ActualParamName(propName);
+
         foreach (var c in content)
         {
-            var prop = c.Value.Schema.ActualSchema.ActualProperties.FirstOrDefault(kvp =>
-                string.Equals(kvp.Key, ActualParamName(propName), StringComparison.OrdinalIgnoreCase)).Key;
+            var props1 = c.Value.Schema.ActualSchema.ActualProperties;
+            var props2 = c.Value.Schema.ActualSchema.AllInheritedSchemas
+                .Select(s => s.ActualProperties)
+                .SelectMany(s => s.Select(s => s));
 
-            if (prop != null)
+            var props = props1.Union(props2);
+
+            var key = props.FirstOrDefault(p => string.Equals(p.Key, propName, StringComparison.OrdinalIgnoreCase)).Key;
+
+            Remove(c.Value.Schema.ActualSchema, key);
+        }
+
+        //recursive property removal
+        static void Remove(JsonSchema schema, string? key)
+        {
+            if (key is null) return;
+
+            schema.Properties.Remove(key);
+
+            foreach (var s in schema.AllOf.Union(schema.AllInheritedSchemas))
             {
-                c.Value.Schema.ActualSchema.Properties.Remove(prop);
-
-                foreach (var schema in c.Value.Schema.ActualSchema.AllOf)
-                    schema.Properties.Remove(prop);
+                Remove(s, key);
             }
         }
     }

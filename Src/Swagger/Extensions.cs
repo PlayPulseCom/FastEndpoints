@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using NJsonSchema.Generation;
 using NSwag;
 using NSwag.AspNetCore;
 using NSwag.Generation;
 using NSwag.Generation.AspNetCore;
 using NSwag.Generation.Processors.Security;
 using System.Reflection;
+using System.Text.Json;
 
 namespace FastEndpoints.Swagger;
 
@@ -54,7 +54,7 @@ public static class Extensions
     /// <param name="shortSchemaNames">set to true if you'd like schema names to be the class name intead of the full name</param>
     public static IServiceCollection AddSwaggerDoc(this IServiceCollection services,
         Action<AspNetCoreOpenApiDocumentGeneratorSettings>? settings = null,
-        Action<JsonSerializerSettings>? serializerSettings = null,
+        Action<JsonSerializerOptions>? serializerSettings = null,
         bool addJWTBearerAuth = true,
         int tagIndex = 1,
         int maxEndpointVersion = 0,
@@ -63,9 +63,9 @@ public static class Extensions
         services.AddEndpointsApiExplorer();
         services.AddOpenApiDocument(s =>
         {
-            var ser = new JsonSerializerSettings() { ContractResolver = new DefaultContractResolver { NamingStrategy = null } };
-            serializerSettings?.Invoke(ser);
-            s.SerializerSettings = ser;
+            var stjOpts = new JsonSerializerOptions(Config.SerializerOpts);
+            serializerSettings?.Invoke(stjOpts);
+            s.SerializerSettings = SystemTextJsonUtilities.ConvertJsonOptionsToNewtonsoftSettings(stjOpts);
             s.EnableFastEndpoints(tagIndex, maxEndpointVersion, shortSchemaNames);
             if (addJWTBearerAuth) s.EnableJWTBearerAuth();
             settings?.Invoke(s);

@@ -20,11 +20,12 @@ public class Endpoint : Endpoint<Request, Response>
         AllowAnonymous();
         ScopedValidator();
         Options(b => b.RequireCors(b => b.AllowAnyOrigin()));
-        Describe(b => b
+        Description(b => b
             .Accepts<Request>("application/json")
-            .Produces<Response>(200)
+            .Produces<Response>(200, "application/json")
             .Produces(400)
-            .Produces(403));
+            .Produces(403),
+        clearDefaults: true);
         Summary(s =>
         {
             s.Summary = "this is a short summary";
@@ -35,7 +36,7 @@ public class Endpoint : Endpoint<Request, Response>
             s[403] = "forbidden when login fails";
             s[201] = "new resource created";
         });
-        SerializerContext<AdminLogin>();
+        SerializerContext(AdminLogin.Default);
     }
 
     public override Task HandleAsync(Request r, CancellationToken ct)

@@ -1,4 +1,4 @@
-﻿using FastEndpoints.Validation;
+﻿using FluentValidation.Results;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using System.Runtime.CompilerServices;
@@ -15,7 +15,7 @@ namespace FastEndpoints;
 public class Config
 {
     internal static JsonSerializerOptions SerializerOpts { get; set; } = new(); //should only be set from UseFastEndpoints() during startup
-    internal static bool ShortEpNames { get; set; }
+    internal static bool ShortEpNames { get; private set; }
     internal static VersioningOptions? VersioningOpts { get; private set; }
     internal static RoutingOptions? RoutingOpts { get; private set; }
     internal static Func<EndpointDefinition, bool>? EpRegFilterFunc { get; private set; }

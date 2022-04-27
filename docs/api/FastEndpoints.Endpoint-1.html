@@ -136,6 +136,9 @@
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Route__1_System_String_System_Boolean_">Endpoint&lt;TRequest, Object&gt;.Route&lt;T&gt;(String, Boolean)</a>
     </div>
     <div>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Query__1_System_String_System_Boolean_">Endpoint&lt;TRequest, Object&gt;.Query&lt;T&gt;(String, Boolean)</a>
+    </div>
+    <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_OnBeforeValidate__0_">Endpoint&lt;TRequest, Object&gt;.OnBeforeValidate(TRequest)</a>
     </div>
     <div>
@@ -190,6 +193,9 @@
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Files">Endpoint&lt;TRequest, Object&gt;.Files</a>
     </div>
     <div>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_ResponseStarted">Endpoint&lt;TRequest, Object&gt;.ResponseStarted</a>
+    </div>
+    <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendAsync__1_System_Int32_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendAsync(Object, Int32, CancellationToken)</a>
     </div>
     <div>
@@ -199,7 +205,7 @@
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendCreatedAtAsync_System_String_System_Object__1_System_Boolean_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendCreatedAtAsync(String, Object, Object, Boolean, CancellationToken)</a>
     </div>
     <div>
-      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendStringAsync_System_String_System_Int32_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendStringAsync(String, Int32, CancellationToken)</a>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendStringAsync_System_String_System_Int32_System_String_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendStringAsync(String, Int32, String, CancellationToken)</a>
     </div>
     <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendOkAsync__1_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendOkAsync(Object, CancellationToken)</a>
@@ -235,6 +241,9 @@
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendStreamAsync_Stream_System_String_System_Nullable_System_Int64__System_String_System_Nullable_DateTimeOffset__System_Boolean_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendStreamAsync(Stream, String, Nullable&lt;Int64&gt;, String, Nullable&lt;DateTimeOffset&gt;, Boolean, CancellationToken)</a>
     </div>
     <div>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendEventStreamAsync__1_System_String_IAsyncEnumerable___0__CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendEventStreamAsync&lt;T&gt;(String, IAsyncEnumerable&lt;T&gt;, CancellationToken)</a>
+    </div>
+    <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SendEmptyJsonObject_CancellationToken_">Endpoint&lt;TRequest, Object&gt;.SendEmptyJsonObject(CancellationToken)</a>
     </div>
     <div>
@@ -260,6 +269,9 @@
     </div>
     <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_DontThrowIfValidationFails">Endpoint&lt;TRequest, Object&gt;.DontThrowIfValidationFails()</a>
+    </div>
+    <div>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_DontAutoTag">Endpoint&lt;TRequest, Object&gt;.DontAutoTag()</a>
     </div>
     <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_AllowAnonymous_FastEndpoints_Http___">Endpoint&lt;TRequest, Object&gt;.AllowAnonymous(Http[])</a>
@@ -304,10 +316,7 @@
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Options_Action_Microsoft_AspNetCore_Builder_RouteHandlerBuilder__">Endpoint&lt;TRequest, Object&gt;.Options(Action&lt;RouteHandlerBuilder&gt;)</a>
     </div>
     <div>
-      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Describe_Action_Microsoft_AspNetCore_Builder_RouteHandlerBuilder__">Endpoint&lt;TRequest, Object&gt;.Describe(Action&lt;RouteHandlerBuilder&gt;)</a>
-    </div>
-    <div>
-      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Summary_System_String_System_ValueTuple_System_Int32_System_String____">Endpoint&lt;TRequest, Object&gt;.Summary(String, (T1, T2)&lt;Int32, String&gt;[])</a>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Description_Action_Microsoft_AspNetCore_Builder_RouteHandlerBuilder__System_Boolean_">Endpoint&lt;TRequest, Object&gt;.Description(Action&lt;RouteHandlerBuilder&gt;, Boolean)</a>
     </div>
     <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Summary_Action_FastEndpoints_EndpointSummary__">Endpoint&lt;TRequest, Object&gt;.Summary(Action&lt;EndpointSummary&gt;)</a>
@@ -328,10 +337,13 @@
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_Throttle_System_Int32_System_Double_System_String_">Endpoint&lt;TRequest, Object&gt;.Throttle(Int32, Double, String)</a>
     </div>
     <div>
-      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SerializerContext__1">Endpoint&lt;TRequest, Object&gt;.SerializerContext&lt;TContext&gt;()</a>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_SerializerContext__1___0_">Endpoint&lt;TRequest, Object&gt;.SerializerContext&lt;TContext&gt;(TContext)</a>
     </div>
     <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_ScopedValidator">Endpoint&lt;TRequest, Object&gt;.ScopedValidator()</a>
+    </div>
+    <div>
+      <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_RoutePrefixOverride_System_String_">Endpoint&lt;TRequest, Object&gt;.RoutePrefixOverride(String)</a>
     </div>
     <div>
       <a class="xref" href="FastEndpoints.Endpoint-2.html#FastEndpoints_Endpoint_2_AddError_System_String_">Endpoint&lt;TRequest, Object&gt;.AddError(String)</a>
@@ -353,6 +365,9 @@
     </div>
     <div>
       <a class="xref" href="FastEndpoints.BaseEndpoint.html#FastEndpoints_BaseEndpoint_Configuration">BaseEndpoint.Configuration</a>
+    </div>
+    <div>
+      <a class="xref" href="FastEndpoints.BaseEndpoint.html#FastEndpoints_BaseEndpoint_Verbs_FastEndpoints_Http___">BaseEndpoint.Verbs(Http[])</a>
     </div>
     <div>
       <a class="xref" href="FastEndpoints.BaseEndpoint.html#FastEndpoints_BaseEndpoint_HttpContext">BaseEndpoint.HttpContext</a>

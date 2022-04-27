@@ -113,7 +113,7 @@ app.Run();
 </code></pre>
 <p>you can then visit <code>/swagger</code> or <code>/swagger/v1/swagger.json</code> to see swagger output.</p>
 <h2 id="configuration">configuration</h2>
-<p>swagger options can be configured as you'd typically do like follows:</p>
+<p>swagger options can be configured as you'd typically do via the <code>AddSwaggerDoc()</code> method:</p>
 <pre><code class="lang-csharp">builder.Services.AddSwaggerDoc(settings =&gt;
 {
     settings.Title = &quot;My API&quot;;
@@ -121,26 +121,30 @@ app.Run();
 });
 </code></pre>
 <h2 id="describe-endpoints">describe endpoints</h2>
-<p>by default, both <code>Accepts</code> and <code>Produces</code> are inferred from the request/response dto types of your endpoints and added to the swagger description. if the defaults are not satisfactory, you can clear the defaults completely and describe your endpoints with the <code>Describe()</code> method in configuration like so:</p>
+<p>by default, both <code>Accepts</code> and <code>Produces</code> metadata are inferred from the request/response dto types of your endpoints and added to the swagger document automatically. so you only need to specify the additional accepts/produces metadata using the <code>Description()</code> method like so:</p>
 <pre><code class="lang-csharp">public class MyEndpoint : Endpoint&lt;MyRequest, MyResponse&gt;
 {
     public override void Configure()
     {
         Post(&quot;/admin/login&quot;);
         AllowAnonymous();
-        Describe(b =&gt; b
-          .Accepts&lt;MyRequest&gt;(&quot;application/json&quot;)
-          .Produces&lt;MyResponse&gt;(200,&quot;application/json&quot;)
+        Description(b =&gt; b
+          .Produces&lt;ErrorResponse&gt;(400,&quot;application/json+problem&quot;)
           .ProducesProblem(403));
     }
 }
 </code></pre>
-<p>on the other-hand if the default <code>Accepts</code> &amp; <code>Produces</code> are ok, and you want to just add something else like <code>ProducesProblem</code>, simply use the <code>Options()</code> method to specify the additional descriptions:</p>
+<p>if the default <code>Accepts</code> &amp; <code>Produces</code> are not to your liking, you can clear the defaults and do it all yourself by setting the <code>clearDefaults</code> argument to <code>true</code>:</p>
 <pre><code class="lang-csharp">public override void Configure()
 {
     Post(&quot;/admin/login&quot;);
     AllowAnonymous();
-    Options(x =&gt; x.ProducesProblem(404));
+    Description(b =&gt; b
+        .Accepts&lt;MyRequest&gt;(&quot;application/json+custom&quot;)
+        .Produces&lt;MyResponse&gt;(200, &quot;application/json+custom&quot;)
+        .Produces&lt;ErrorResponse&gt;(400, &quot;application/json+problem&quot;)
+        .ProducesProblem(403),
+    clearDefaults: true);
 }
 </code></pre>
 <h3 id="swagger-documentation">swagger documentation</h3>
@@ -149,9 +153,7 @@ app.Run();
 {
     Post(&quot;/admin/login&quot;);
     AllowAnonymous();
-    Describe(b =&gt; b
-      .Accepts&lt;MyRequest&gt;(&quot;application/json&quot;)
-      .Produces&lt;MyResponse&gt;(200,&quot;application/json&quot;)
+    Description(b =&gt; b
       .ProducesProblem(403));
     Summary(s =&gt; {
         s.Summary = &quot;short summary goes here&quot;;
@@ -177,9 +179,7 @@ public override void Configure()
 {
     Post(&quot;/admin/login&quot;);
     AllowAnonymous();
-    Describe(b =&gt; b
-      .Accepts&lt;MyRequest&gt;(&quot;application/json&quot;)
-      .Produces&lt;MyResponse&gt;(200,&quot;application/json&quot;)
+    Description(b =&gt; b
       .ProducesProblem(403));
     Summary(new AdminLoginSummary());        
 }
@@ -231,6 +231,20 @@ public class Request
 <blockquote>
 <p>if you can figure out how to get nswag to read the xml summary/remarks tags from the endpoint classes, please submit a PR on github.</p>
 </blockquote>
+<h2 id="adding-query-params-to-swagger-document">adding query params to swagger document</h2>
+<p>in order to let swagger know that a particular request dto property is being bound from a query string parameter, you need to decorate that property with the <code>[QueryParam]</code> attribute like below. when you annotate a property with the <code>[QueryParam]</code> attribute, a <a href="/images/swagger-queryparam.png">query parameter will be added</a> to the swagger document for that property.</p>
+<pre><code class="lang-csharp">public class CreateEmployeeRequest
+{
+    [QueryParam]
+    public string Name { get; set; } //bound from query string
+
+    [QueryParam, BindFrom(&quot;id&quot;)]
+    public string? ID { get; set; } //bound from query string
+
+    public Address Address { get; set; } //bound from body
+}
+</code></pre>
+<p>the <code>[QueryParam]</code> attribute does not affect the <a href="/wiki/Model-Binding.md">model binding order</a> in any way. it is just a way to make swagger add a query param.</p>
 <h2 id="disable-jwt-auth-scheme">disable jwt auth scheme</h2>
 <p>support for jwt bearer auth is automatically added. if you need to disable it, simply pass a <code>false</code> value to the following parameter:</p>
 <pre><code class="lang-csharp">builder.Services.AddSwaggerDoc(addJWTBearerAuth: false);
@@ -257,22 +271,28 @@ public class Request
 });
 </code></pre>
 <p>doing the above will associate each of the auth schemes with all endpoints/ swagger operations. if some of your endpoints are only using a a few, they can be specified per endpoint with the <code>AuthSchemes()</code> <a href="Security.html#multiple-authentication-schemes">endpoint method</a>, in which case only the relevant auth schemes will be associated with each swagger operation. for example, if you have both <code>ApiKey</code> and <code>Bearer</code> schemes enabled in swagger and an endpoint only uses <code>ApiKey</code> scheme, when you hit the <code>Try It Out</code> button in swagger ui, only api key auth prompt will be shown.</p>
-<h2 id="group-endpoints-by-path-segment">group endpoints by path segment</h2>
+<h2 id="group-endpoints-by-path-segment-auto-tagging">group endpoints by path segment (auto tagging)</h2>
 <p>if you'd like to group your endpoints by a segment of the route url, simply specify an integer indicating which segment to use for tagging/grouping.</p>
 <pre><code class="lang-csharp">builder.Services.AddSwaggerDoc(tagIndex: 2)
 </code></pre>
-<p>if you'd like to take control of the tagging behavior, simply set <code>tagIndex: 0</code> to disable auto tagging of endpoints and specify a tag for each endpoint via <code>Options(x =&gt; x.WithTags(&quot;xyz&quot;))</code> method.</p>
+<h3 id="overriding-auto-tagging">overriding auto tagging</h3>
+<p>if you have auto tagging enabled but would like to prevent a particular endpoint from being auto tagged, you can call the <code>DontAutoTag()</code> method in endpoint configuration to prevent a tag based on a path segment from being added.</p>
+<h3 id="manual-tagging">manual tagging</h3>
+<p>if you'd like to take control of the tagging behavior, simply set <code>tagIndex: 0</code> to disable auto tagging of endpoints and specify a tag for each endpoint via <code>Description(x =&gt; x.WithTags(&quot;xyz&quot;))</code> method.</p>
 <h2 id="customize-swagger-schema-names">customize swagger schema names</h2>
 <p>by default, schema names are generated using the full name of dto classes. you can make the schema names be just the class name.</p>
-<pre><code class="lang-cshar">builder.Services.AddSwaggerDoc(shortSchemaNames: true);
+<pre><code class="lang-csharp">builder.Services.AddSwaggerDoc(shortSchemaNames: true);
 </code></pre>
 <h2 id="swagger-serializer-options">swagger serializer options</h2>
-<p>nswag uses a separate serializer (newtonsoft) and has it's own set of serializer options you can configure like so:</p>
+<p>even though nswag uses a separate serializer (newtonsoft) internally, we specify serialization settings for nswag using <code>System.Text.Json.JsonSerializerOptions</code> just so we don't have to deal with anything related to newtonsoft (until nswag fully switches over to System.Text.Json).</p>
 <pre><code class="lang-csharp">builder.Services.AddSwaggerDoc(serializerSettings: x =&gt;
 {
-    x.ContractResolver = new CamelCasePropertyNamesContractResolver();
+    x.PropertyNamingPolicy = null;
+    x.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    ...
 });
 </code></pre>
+<p>with the above approach, <code>System.Text.Json</code> annotations such as <code>JsonIgnore</code> and <code>JsonPropertyName</code> on your dtos work out of the box.</p>
 <h2 id="customize-endpoint-name-swagger-operation-id">customize endpoint name/ swagger operation id</h2>
 <p>the full name (including namespace) of the endpoint classes are used to generate the operation ids. you can change it to use just the class name by doing the following at startup:</p>
 <pre><code class="lang-csharp">app.UseFastEndpoints(c =&gt;
@@ -285,7 +305,7 @@ public class Request
 <pre><code class="lang-csharp">public override void Configure()
 {
     Get(&quot;/sales/invoice/{InvoiceID}&quot;);
-    Options(x =&gt; x.WithName(&quot;GetInvoice&quot;));
+    Description(x =&gt; x.WithName(&quot;GetInvoice&quot;));
 }
 </code></pre>
 <p><strong>note:</strong> when you manually specify a name for an endpoint like above and you want to point to that endpoint when using <a href="Misc-Conveniences.html#sendcreatedatasync">SendCreatedAtAsync()</a> method, you must use the overload that takes a string argument with which you can specify the name of the target endpoint. i.e. you lose the convenience/type-safety of being able to simply point to another endpoint using the class type like so:</p>

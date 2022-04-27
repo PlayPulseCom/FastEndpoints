@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using FluentValidation;
+using System.Text.Json.Serialization;
 
 namespace Admin.Login;
 
@@ -22,7 +23,7 @@ public class Request
     /// </summary>
     public string Password { get; set; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore]
     public string GetterOnlyProp => "test";
 }
 

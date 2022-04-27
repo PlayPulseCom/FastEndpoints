@@ -19,6 +19,7 @@ public class Endpoint : Endpoint<Request, Response>
     public override void Configure()
     {
         Post("test-cases/plaintext/{Id}");
+        RoutePrefixOverride(string.Empty);
         AllowAnonymous();
         Summary(s =>
         {
