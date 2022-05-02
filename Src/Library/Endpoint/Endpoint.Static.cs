@@ -139,9 +139,10 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
     {
         var parameters = constructorInfo.GetParameters();
         unbindableParameters = parameters
-            .Where(parameter => !values.ContainsKey(parameter.Name!))
+            .Where(parameter => !values.ContainsKey(parameter.Name!) && !parameter.HasDefaultValue)
             .Select(parameter => parameter.Name!)
             .ToList();
+
         if (unbindableParameters.Any())
         {
             request = default!;
@@ -179,8 +180,21 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
         var unused = new Dictionary<string, object?>(values);
         foreach (var parameter in parameters)
         {
-            args.Add(values[parameter.Name!]);
-            unused.Remove(parameter.Name!);
+            if (values.TryGetValue(parameter.Name!, out var value))
+            {
+                args.Add(value);
+                unused.Remove(parameter.Name!);
+            }
+            else if (parameter.HasDefaultValue)
+            {
+                args.Add(parameter.DefaultValue);
+                unused.Remove(parameter.Name!);
+            }
+            else
+            {
+                // Shouldn't happen
+                throw new ArgumentException("A property either needs to be provided in the request, or have a default value");
+            }
         }
 
         return (args.ToArray(), unused);
@@ -217,8 +231,7 @@ public abstract partial class Endpoint<TRequest, TResponse> : BaseEndpoint where
             .Select(x => (
                 x.Key,
                 cachedProps.TryGetValue(x.Key, out var prop) ? x.Value?.Deserialize(prop.PropType, ctx?.Options ?? FastEndpoints.Config.SerializerOpts) : null
-            ))
-            .ToList();
+            ));
     }
 
     private static Task AutoSendResponse(HttpContext ctx, TResponse? responseDto, JsonSerializerContext? jsonSerializerContext, CancellationToken cancellation)
